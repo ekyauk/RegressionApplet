@@ -8,3 +8,6 @@ input[type=range] {
 #graph-body {
     display: inline-block;
 }
+circle {
+    fill: steelblue;
+}

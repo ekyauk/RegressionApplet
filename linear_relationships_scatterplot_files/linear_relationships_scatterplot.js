@@ -28,7 +28,6 @@ var coefficient = function(points) {
     denom = Math.pow(sumSqX * n - Math.pow(sumX,2), 0.5) * Math.pow(n * sumSqY - Math.pow(sumY, 2), 0.5);
     if (denom == 1) return 1;
     r = num/denom;
-    console.log(points);
     return r;
 }
 
@@ -99,6 +98,11 @@ var coefficient = function(points) {
     if (x < 0 || x > 100 || y < 0 || y > 100) return;
     addCircle([x, y]);
     $('#r-result').text(coefficient(data));
+  });
+
+  $('#clear').click(function(){
+    data = [];
+    g.selectAll("*").remove();
   });
 // content.click(function(e){
 //   var x = chart.position().left - e.pageX;
