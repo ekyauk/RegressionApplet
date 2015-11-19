@@ -33,14 +33,18 @@
 
 <body>
 
-  <div align="center">
-      <div align="center" class="content" id="content">
-      </div>
-      <p>R:</p>
-      <div id="r-result"></div>
-      <button type="button" class="btn btn-default" id="clear">
-        <span class="glyphicon glyphicon-trash"></span> Clear
-      </button>
+    <div align="center">
+        <div align="center" class="content" id="content">
+        </div>
+        <div id="r-result">R:</div>
+        <span>
+            <input type="radio" name="mode" value="line" /> Draw line&nbsp;&nbsp;&nbsp;&nbsp;
+            <input type="radio" id="addPoint" name="mode" value="dots" checked="checked" /> Add point&nbsp;&nbsp;&nbsp;&nbsp;
+            <button type="button" class="btn btn-default" id="clear">
+                <span class="glyphicon glyphicon-trash"></span> Clear
+            </button>
+        </span>
+
   </div>
 
 </body>
