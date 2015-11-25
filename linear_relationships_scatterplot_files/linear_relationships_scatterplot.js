@@ -4,7 +4,7 @@ $(document).ready(function(){
   //creates the data points distributed somewhat-evenly throughout the graph
   var data = [];
 
-  var coefficient = function(points) {
+  var rCoefficient = function(points) {
     sumX = 0.0;
     sumY = 0.0;
     sumSqX = 0.0;
@@ -27,6 +27,48 @@ $(document).ready(function(){
       if (denom == 1) return 1;
       r = num/denom;
       return r;
+  }
+
+  var regressionLine = function(points, r) {
+    $('#least-squares').remove();
+
+    var meanX = 0;
+    var meanY = 0;
+    for (var i = 0; i < points.length; i++) {
+      var point = points[i];
+      meanX += point[0];
+      meanY += point[1];
+    }
+    meanX /= points.length;
+    meanY /= points.length;
+
+    // Calculate Standard Deviation
+    var sdX = 0;
+    var sdY = 0;
+    for (var i = 0; i < points.length; i++) {
+      var point = points[i];
+      sdX += Math.pow(meanX - point[0], 2);
+      sdY += Math.pow(meanY - point[1], 2);
+    }
+    sdX = Math.pow(sdX/points.length, 0.5);
+    sdY = Math.pow(sdY/points.length, 0.5);
+
+    var m = r * (sdY/sdX); //slope
+    var b = meanY - m * meanX; //y-intercept
+
+    var startX = 0;
+    var startY = b;
+    var endX = 100;
+    var endY = m*endX + b;
+
+    g.append("line")
+      .attr('id', 'least-squares')
+      .attr("x1", x(startX))
+      .attr("y1", y(startY))
+      .attr("x2", x(endX))
+      .attr("y2", y(endY))
+      .attr("stroke-width", 2)
+      .attr("stroke", "red")
   }
 
   var margin = {top: 20, right: 15, bottom: 60, left: 60}
@@ -95,7 +137,9 @@ $(document).ready(function(){
       console.log("Clicked at " + px + " ," + py);
       if (px < 0 || px > 100 || py < 0 || py > 100) return;
       addCircle([px, py]);
-      $('#r-result').text("R: " + coefficient(data));
+      var r = rCoefficient(data);
+      $('#r-result').text("R: " + r);
+      regressionLine(data, r);
     }
   });
 
