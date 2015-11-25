@@ -36,10 +36,15 @@
     <div align="center">
         <div align="center" class="content" id="content">
         </div>
-        <div id="r-result">R:</div>
+        <span>
+            <div id="r-result">R = 0</div>
+            <div id="num-points"># points = 0</div>
+        </span>
         <span>
             <input type="radio" name="mode" value="line" /> Draw line&nbsp;&nbsp;&nbsp;&nbsp;
             <input type="radio" id="addPoint" name="mode" value="dots" checked="checked" /> Add point&nbsp;&nbsp;&nbsp;&nbsp;
+            <input type="checkbox" id="regression-line" name="regression-line" value="regression-line"> Draw Least Squares&nbsp;&nbsp;&nbsp;&nbsp;
+            <input type="checkbox" id="mean-vals" name="mean-vals" > Show mean X &amp; Y&nbsp;&nbsp;&nbsp;&nbsp;
             <button type="button" class="btn btn-default" id="clear">
                 <span class="glyphicon glyphicon-trash"></span> Clear
             </button>

@@ -1,17 +1,17 @@
 $(document).ready(function(){
 
   function sign(x) { return x > 0 ? 1 : x < 0 ? -1 : 0; };
-  //creates the data points distributed somewhat-evenly throughout the graph
-  var data = [];
+  //creates the points distributed somewhat-evenly throughout the graph
+  var points = [];
 
-  var rCoefficient = function(points) {
+  var rCoefficient = function() {
     sumX = 0.0;
     sumY = 0.0;
     sumSqX = 0.0;
     sumSqY = 0.0;
     sumXY = 0.0;
     n = points.length;
-    if (data.length <= 0) return 0;
+    if (points.length <= 0) return 0;
     for (var i = 0; i < points.length; i++) {
       var point = points[i];
       sumX += point[0];
@@ -29,7 +29,37 @@ $(document).ready(function(){
       return r;
   }
 
-  var regressionLine = function(points, r) {
+  var drawLine = function(x1, y1, x2, y2, id, color) {
+    g.append("line")
+      .attr('id', id)
+      .attr("x1", x(x1))
+      .attr("y1", y(y1))
+      .attr("x2", x(x2))
+      .attr("y2", y(y2))
+      .attr("stroke-width", 2)
+      .attr("stroke", color)
+  }
+
+  var updateMeanValueLines = function() {
+    if (points.length == 0) return;
+
+    var meanX = 0;
+    var meanY = 0;
+    for (var i = 0; i < points.length; i++) {
+      var point = points[i];
+      meanX += point[0];
+      meanY += point[1];
+    }
+    meanX /= points.length;
+    meanY /= points.length;
+    $('#mean-x').remove();
+    $('#mean-y').remove();
+
+    drawLine(meanX, 0, meanX, 100, 'mean-x', 'blue');
+    drawLine(0, meanY, 100, meanY, 'mean-y', 'blue');
+  }
+
+  var regressionLine = function() {
     $('#least-squares').remove();
 
     var meanX = 0;
@@ -60,15 +90,7 @@ $(document).ready(function(){
     var startY = b;
     var endX = 100;
     var endY = m*endX + b;
-
-    g.append("line")
-      .attr('id', 'least-squares')
-      .attr("x1", x(startX))
-      .attr("y1", y(startY))
-      .attr("x2", x(endX))
-      .attr("y2", y(endY))
-      .attr("stroke-width", 2)
-      .attr("stroke", "red")
+    drawLine(startX, startY, endX, endY, 'least-squares', 'red');
   }
 
   var margin = {top: 20, right: 15, bottom: 60, left: 60}
@@ -119,11 +141,12 @@ $(document).ready(function(){
 
   var g = main.append("svg:g")
                 .attr('id', 'graph-body');
+  var r = 0;
 
-  var addCircle = function(point) {
-    data.push(point);
+  var addPoint = function(point) {
+    points.push(point);
     g.selectAll("scatter-dots")
-      .data(data)
+      .data(points)
       .enter().append("svg:circle")
           .attr("cx", function (d,i) { return x(d[0]); } )
           .attr("cy", function (d) { return y(d[1]); } )
@@ -131,15 +154,27 @@ $(document).ready(function(){
   }
 
   $('body').click(function(e){
-    if ($('#addPoint').is(":checked")) {
+    if ($('#addPoint').is(':checked')) {
+
       var px = (e.pageX - ($('#chart').position().left + margin.left))/width * 100;
       var py = ($('#chart').position().top + height + margin.top - e.pageY)/height * 100;
-      console.log("Clicked at " + px + " ," + py);
       if (px < 0 || px > 100 || py < 0 || py > 100) return;
-      addCircle([px, py]);
-      var r = rCoefficient(data);
-      $('#r-result').text("R: " + r);
-      regressionLine(data, r);
+
+      addPoint([px, py]);
+
+      $('#num-points').text("# points = " + points.length);
+
+      if (points.length > 1) {
+        r = rCoefficient();
+        $('#r-result').text("R = " + Math.round(r*100)/100);
+      }
+
+      if ($('#regression-line').is(':checked')) {
+        regressionLine();
+      }
+      if ($('#mean-vals').is(':checked')) {
+        updateMeanValueLines();
+      }
     }
   });
 
@@ -151,8 +186,6 @@ $(document).ready(function(){
       isDrawingLine = true;
       lineStartX = (e.pageX - ($('#chart').position().left + margin.left))/width * 100;
       lineStartY = ($('#chart').position().top + height + margin.top - e.pageY)/height * 100;
-      console.log("Starting line at " + lineStartX + " ," + lineStartY);
-      console.log("start drawing");
     }
   });
   $('body').mousemove(function(e){
@@ -160,14 +193,7 @@ $(document).ready(function(){
       $('#drawn-line').remove();
       lineEndX = (e.pageX - ($('#chart').position().left + margin.left))/width * 100;
       lineEndY = ($('#chart').position().top + height + margin.top - e.pageY)/height * 100;
-      g.append("line")
-        .attr('id', 'drawn-line')
-        .attr("x1", x(lineStartX))
-        .attr("y1", y(lineStartY))
-        .attr("x2", x(lineEndX))
-        .attr("y2", y(lineEndY))
-        .attr("stroke-width", 2)
-        .attr("stroke", "green")
+      drawLine(lineStartX, lineStartY, lineEndX, lineEndY, 'drawn-line', 'green');
     }
   });
 
@@ -178,8 +204,27 @@ $(document).ready(function(){
   });
 
   $('#clear').click(function(){
-    data = [];
+    points = [];
     g.selectAll("*").remove();
+    $('#r-result').text("R = 0");
+    $('#num-points').text("# points = 0");
+  });
+
+  $('#regression-line').change(function() {
+    if (this.checked) {
+      regressionLine();
+    } else {
+      $('#least-squares').remove();
+    }
+  });
+
+  $('#mean-vals').change(function() {
+    if (this.checked) {
+      updateMeanValueLines();
+    } else {
+      $('#mean-y').remove();
+      $('#mean-x').remove();
+    }
   });
 
 })
