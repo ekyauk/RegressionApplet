@@ -31,15 +31,16 @@
 
 <!-- creates the slider and button to flip the sign -->
 
-<body>
+<body class="noselect">
 
     <div align="center">
+        <span class="row">
+            <div class="col-xs-6" id="r-result">Correlation r = 0</div>
+            <div class="col-xs-6" id="num-points"># points = 0</div>
+        </span>
         <div align="center" class="content" id="content">
         </div>
-        <span>
-            <div id="r-result">R = 0</div>
-            <div id="num-points"># points = 0</div>
-        </span>
+
         <span>
             <input type="radio" name="mode" value="line" /> Draw line&nbsp;&nbsp;&nbsp;&nbsp;
             <input type="radio" id="addPoint" name="mode" value="dots" checked="checked" /> Add point&nbsp;&nbsp;&nbsp;&nbsp;

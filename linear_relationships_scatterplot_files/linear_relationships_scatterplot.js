@@ -4,29 +4,32 @@ $(document).ready(function(){
   //creates the points distributed somewhat-evenly throughout the graph
   var points = [];
 
-  var rCoefficient = function() {
+  var rCoefficient = function(points_arr) {
     sumX = 0.0;
     sumY = 0.0;
     sumSqX = 0.0;
     sumSqY = 0.0;
     sumXY = 0.0;
-    n = points.length;
-    if (points.length <= 0) return 0;
-    for (var i = 0; i < points.length; i++) {
-      var point = points[i];
-      sumX += point[0];
-      sumY += point[1];
-      sumSqX += Math.pow(point[0], 2);
-      sumSqY += Math.pow(point[1], 2);
-      sumXY += point[0] * point[1];
+    n = points_arr.length;
+    if (n <= 0) return 0;
+    for (var i = 0; i < n; i++) {
+      var point = points_arr[i];
+      var x = point[0];
+      var y = point[1];
+      sumX += x;
+      sumY += y;
+      sumSqX += Math.pow(x, 2);
+      sumSqY += Math.pow(y, 2);
+      sumXY += x * y;
 
     }
+    console.log(sumX)
 
-      num = sumXY * n - sumX * sumY;
-      denom = Math.pow(sumSqX * n - Math.pow(sumX,2), 0.5) * Math.pow(n * sumSqY - Math.pow(sumY, 2), 0.5);
-      if (denom == 1) return 1;
-      r = num/denom;
-      return r;
+    num = sumXY * n - sumX * sumY;
+    denom = Math.pow(sumSqX * n - Math.pow(sumX,2), 0.5) * Math.pow(n * sumSqY - Math.pow(sumY, 2), 0.5);
+    if (denom == 1) return 1;
+    r = num/denom;
+    return r;
   }
 
   var drawLine = function(x1, y1, x2, y2, id, color) {
@@ -143,15 +146,44 @@ $(document).ready(function(){
                 .attr('id', 'graph-body');
   var r = 0;
 
-  var addPoint = function(point) {
-    points.push(point);
+  var updatePoints = function() {
+    $('.point').remove();
     g.selectAll("scatter-dots")
       .data(points)
       .enter().append("svg:circle")
           .attr("cx", function (d,i) { return x(d[0]); } )
           .attr("cy", function (d) { return y(d[1]); } )
-          .attr("r", 4);
+          .attr("r", 4)
+          .attr('fill', 'steelblue')
+          .attr('class','point');
   }
+
+  var addPoint = function(point) {
+    points.push(point);
+    updatePoints();
+  }
+
+  var addMoveablePoint = function(point) {
+    g.append("svg:circle")
+      .attr("cx", function (d,i) { return x(point[0]); } )
+      .attr("cy", function (d) { return y(point[1]); } )
+      .attr("r", 4)
+      .attr('fill', 'green')
+      .attr('id','moveable-point');
+  }
+
+  var pointWasRemoved = function(point) {
+    for (var i = 0; i < points.length; i++) {
+      var p = points[i];
+      if (Math.abs(p[0] - point[0]) < 0.01 && Math.abs(p[1] - point[1]) < 0.01){
+        points.splice(i, 1)
+        return true;
+      }
+    }
+    return false;
+  }
+
+  var isMovingPoint = false;
 
   $('body').click(function(e){
     if ($('#addPoint').is(':checked')) {
@@ -159,14 +191,15 @@ $(document).ready(function(){
       var px = (e.pageX - ($('#chart').position().left + margin.left))/width * 100;
       var py = ($('#chart').position().top + height + margin.top - e.pageY)/height * 100;
       if (px < 0 || px > 100 || py < 0 || py > 100) return;
+      point = [+px.toFixed(4), +py.toFixed(4)]
 
-      addPoint([px, py]);
+      addPoint(point);
 
       $('#num-points').text("# points = " + points.length);
 
       if (points.length > 1) {
-        r = rCoefficient();
-        $('#r-result').text("R = " + Math.round(r*100)/100);
+        r = rCoefficient(points);
+        $('#r-result').text("Correlation r = " + Math.round(r*100)/100);
       }
 
       if ($('#regression-line').is(':checked')) {
@@ -178,27 +211,62 @@ $(document).ready(function(){
     }
   });
 
-  var lineStartX = 0;
-  var lineStartY = 0;
+  var drawnStartX = 0;
+  var drawnStartY = 0;
+  var drawnEndX = 0;
+  var drawnEndY = 0;
+
   var isDrawingLine = false;
   $('body').mousedown(function(e){
+    var px = (e.pageX - ($('#chart').position().left + margin.left))/width * 100;
+    var py = ($('#chart').position().top + height + margin.top - e.pageY)/height * 100;
     if (!$('#addPoint').is(":checked")&& $('#drawn-line').length == 0) {
       isDrawingLine = true;
-      lineStartX = (e.pageX - ($('#chart').position().left + margin.left))/width * 100;
-      lineStartY = ($('#chart').position().top + height + margin.top - e.pageY)/height * 100;
+      drawnStartX = px;
+      drawnStartY = py;
     }
-  });
-  $('body').mousemove(function(e){
-    if (!$('#addPoint').is(":checked") && isDrawingLine) {
-      $('#drawn-line').remove();
-      lineEndX = (e.pageX - ($('#chart').position().left + margin.left))/width * 100;
-      lineEndY = ($('#chart').position().top + height + margin.top - e.pageY)/height * 100;
-      drawLine(lineStartX, lineStartY, lineEndX, lineEndY, 'drawn-line', 'green');
+    else if ($('#addPoint').is(':checked')) {
+      if (px < 0 || px > 100 || py < 0 || py > 100) return;
+      point = [+px.toFixed(4), +py.toFixed(4)]
+      if (pointWasRemoved(point)) {
+        isMovingPoint = true;
+        updatePoints();
+        addMoveablePoint(point);
+      }
     }
   });
 
-  $('body').mouseup(function(){
-    if (isDrawingLine) {
+
+  $('body').mousemove(function(e){
+    var px = (e.pageX - ($('#chart').position().left + margin.left))/width * 100;
+    var py = ($('#chart').position().top + height + margin.top - e.pageY)/height * 100;
+    if (!$('#addPoint').is(":checked") && isDrawingLine) {
+      $('#drawn-line').remove();
+      drawnEndX = px;
+      drawnEndY = py;
+      drawLine(drawnStartX, drawnStartY, drawnEndX, drawnEndY, 'drawn-line', 'green');
+    } else if ($('#addPoint').is(":checked") && isMovingPoint) {
+      console.log('Moved to ' + px + ',' + py)
+      tempPoints = points.slice(0);
+      tempPoints.push([px, py]);
+      r = rCoefficient(tempPoints)
+      $('#r-result').text("Correlation r = " + Math.round(r*100)/100);
+      $('#moveable-point').remove();
+      addMoveablePoint([px, py]);
+    }
+  });
+
+  $('body').mouseup(function(e){
+    if (isMovingPoint) {
+      isMovingPoint = false;
+      // $('#moveable-point').remove()
+      var px = (e.pageX - ($('#chart').position().left + margin.left))/width * 100;
+      var py = ($('#chart').position().top + height + margin.top - e.pageY)/height * 100;
+      if (px < 0 || px > 100 || py < 0 || py > 100) return;
+      point = [+px.toFixed(4), +py.toFixed(4)]
+      addPoint(point);
+    }
+    else if (isDrawingLine) {
       isDrawingLine = false;
     }
   });
@@ -206,7 +274,7 @@ $(document).ready(function(){
   $('#clear').click(function(){
     points = [];
     g.selectAll("*").remove();
-    $('#r-result').text("R = 0");
+    $('#r-result').text("Correlation r =  = 0");
     $('#num-points').text("# points = 0");
   });
 
